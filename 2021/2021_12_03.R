@@ -46,7 +46,7 @@ for (i in 1:12) {
   }
   else {
     data3 = data3 %>%
-      dplyr::filter(data3[[i]] == round(mean(data3[[i]])))
+      dplyr::filter(data3[[i]] != round(mean(data3[[i]])))
   }
   if (length(data3[[1]]) == 1) {
     break
@@ -67,7 +67,8 @@ answer2
 data_test = data %>%
   bind_rows(data %>% summarise_all(.funs = ~round(mean(.))))
 
-keep_mode = function(data, column, tie_result) {
+find_mode = function(data, column_num, tie_result) {
+  column = data[[column_num]]
   col_sum = sum(column)
   col_length = length(column)
   if (2*col_sum == col_length) {
@@ -76,17 +77,34 @@ keep_mode = function(data, column, tie_result) {
   else {
     col_mode = round(col_sum/col_length)
   }
-  data = data %>%
-    filter(column == col_mode)
-  return(data)
+  return(col_mode)
+  #data = data %>%
+  #  filter(column == col_mode)
+  #return(data)
 }
 
 data_concat_o2 = data_concat
 for (i in 1:12) {
-  data_concat_o2 = keep_mode(data_concat_o2, data_concat_o2[[i]], 1)
+  mode = find_mode(data_concat_o2, i, 1)
+  data_concat_o2 = data_concat_o2 %>%
+    filter(data_concat_o2[[i]] == mode)
+  if(nrow(data_concat_o2) == 1) {
+    break
+  }
 }
 
 data_concat_co2 = data_concat
 for (i in 1:12) {
-  data_concat_co2 = keep_mode(data_concat_co2, data_concat_co2[[i]], 1)
+  mode = find_mode(data_concat_co2, i, 0)
+  data_concat_co2 = data_concat_co2 %>%
+    filter(data_concat_co2[[i]] != mode)
+  if(nrow(data_concat_co2) == 1) {
+    break
+  }
 }
+
+strtoi(data_concat_o2$number, 2) * strtoi(data_concat_co2$number, 2)
+
+
+
+
