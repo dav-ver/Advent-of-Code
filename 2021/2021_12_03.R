@@ -23,88 +23,32 @@ answer
 data_concat = data %>%
   mutate(number = col_concat(.))
 
-data2 = data_concat
-for (i in 1:12) {
-  if (sum(data2[[i]]) == length(data2[[i]])/2) {
-    data2 = data2 %>%
-      dplyr::filter(data2[[i]] == 1)
-  }
-  else {
-    data2 = data2 %>%
-      dplyr::filter(data2[[i]] == round(mean(data2[[i]])))
-  }
-  if (length(data2[[1]]) == 1) {
-    break
-  }
+keep_mode = function(data, col_num, tie_break, keep_mode) { 
+  column = data[[col_num]]
+  tie = 2*sum(column) == length(column)
+  col_mode = round(sum(column)/length(column))
+  data = data %>%
+  {if (tie) filter(., .[[col_num]] == tie_break)
+   else if (keep_mode) filter(., .[[col_num]] == col_mode)
+   else filter(., .[[col_num]] != col_mode)}
+  return(data)
+  if(nrow(data) == 1) {break}
 }
 
-data3 = data_concat
+data_o2 = data_concat
 for (i in 1:12) {
-  if (sum(data3[[i]]) == length(data3[[i]])/2) {
-    data3 = data3 %>%
-      dplyr::filter(data3[[i]] == 0)
-  }
-  else {
-    data3 = data3 %>%
-      dplyr::filter(data3[[i]] != round(mean(data3[[i]])))
-  }
-  if (length(data3[[1]]) == 1) {
-    break
-  }
+  data_o2 = keep_mode(data = data_o2, col_num = i, tie_break = 1, keep_mode = T)
 }
 
-answer2 = data2 %>%
-  bind_rows(data3) %>%
+data_co2 = data_concat
+for (i in 1:8) {
+  data_co2 = keep_mode(data = data_co2, col_num = i, tie_break = 0, keep_mode = F)
+}
+
+answer2 = data_o2 %>%
+  bind_rows(data_co2) %>%
   select(number) %>%
   mutate(number = strtoi(number, 2)) %>%
   prod()
 
 answer2
-
-
-#attempt 2
-
-data_test = data %>%
-  bind_rows(data %>% summarise_all(.funs = ~round(mean(.))))
-
-find_mode = function(data, column_num, tie_result) {
-  column = data[[column_num]]
-  col_sum = sum(column)
-  col_length = length(column)
-  if (2*col_sum == col_length) {
-    col_mode = tie_result
-  }
-  else {
-    col_mode = round(col_sum/col_length)
-  }
-  return(col_mode)
-  #data = data %>%
-  #  filter(column == col_mode)
-  #return(data)
-}
-
-data_concat_o2 = data_concat
-for (i in 1:12) {
-  mode = find_mode(data_concat_o2, i, 1)
-  data_concat_o2 = data_concat_o2 %>%
-    filter(data_concat_o2[[i]] == mode)
-  if(nrow(data_concat_o2) == 1) {
-    break
-  }
-}
-
-data_concat_co2 = data_concat
-for (i in 1:12) {
-  mode = find_mode(data_concat_co2, i, 0)
-  data_concat_co2 = data_concat_co2 %>%
-    filter(data_concat_co2[[i]] != mode)
-  if(nrow(data_concat_co2) == 1) {
-    break
-  }
-}
-
-strtoi(data_concat_o2$number, 2) * strtoi(data_concat_co2$number, 2)
-
-
-
-
