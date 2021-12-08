@@ -14,7 +14,7 @@ data_cards = read.csv(file = "input_2021_12_04.txt", header = FALSE, skip = 1) %
 five_down_id = function (column) {
   roll_sums = roll_sum(column, n = 5, align = "center", fill = 0)
   winning_row_down = which(roll_sums == 5*999)
-  winning_row = winning_row[which(winning_row %% 5 == 3)]
+  winning_row_down = winning_row_down[which(winning_row_down %% 5 == 3)]
     return(winning_row_down)
 }
 
@@ -41,9 +41,38 @@ for (i in data_balls) {
   if (length(winning_row) > 0) { break }
 }
 
-# Use bingo row (5 across row, or middle of 5 down) to calculae answer
+# Use bingo row (5 across row, or middle of 5 down) to calculate answer
 winning_card = select_winning_card(data_cards, winning_row)
 winning_card[winning_card == 999] = 0
-answer = sum(colSums(bingo_card)) * i
+answer = sum(colSums(winning_card)) * i
 
 answer
+
+
+## PART 2
+
+data_cards = read.csv(file = "input_2021_12_04.txt", header = FALSE, skip = 1) %>%
+  mutate(V1 = str_trim(str_replace_all(V1, "  ", " "))) %>%
+  separate(V1, into = c("V1", "V2", "V3", "V4", "V5"), sep = " ", convert = TRUE)
+
+winning_order_cards = c()
+for (i in data_balls) {
+  data_cards[data_cards == i] = 999
+  winning_rows = c(unname(unlist(lapply(data_cards[,1:5], five_down_id))),
+                  five_along_id(data_cards))
+  winning_cards = unique(5*(winning_rows %/% 5) + 1)
+  winning_cards = winning_cards[!(winning_cards %in% winning_order_cards)]
+  winning_order_cards = c(winning_order_cards, winning_cards)
+  if(length(winning_order_cards) == 100) {
+    break
+  }
+}
+
+last_winning_card = select_winning_card(data_cards, winning_order_cards[100])
+last_winning_card[last_winning_card == 999] = 0
+answer2 = sum(colSums(last_winning_card)) * i
+
+answer2
+
+
+
