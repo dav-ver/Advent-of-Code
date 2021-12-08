@@ -11,53 +11,43 @@ data = read.csv("input_2021_12_05.txt", sep = ".", header = FALSE) %>%
 data_straight_lines = data %>%
   filter(x1 == x2 | y1 == y2)
 
-coords = function(row) {
-  x1 = row[1]
-  y1 = row[2]
-  x2 = row[3]
-  y2 = row[4]
+#Calculcate all coordinates on line between a pair of pts
+coords = function(x1, y1, x2, y2) {
   x_diff = length(seq(x1, x2))
   y_diff = length(seq(y1, y2))
-  # This is not good algebra (since c^2 = a^2 + b^2)
-  # But it does tell me how many points I need to calculate per line
+  # Not good algebra (as c^2 = a^2 + b^2) but does work out total pts needed
   max_diff = max(x_diff, y_diff)
   x_pts = seq(from = x1, to = x2, length.out = max_diff)
   y_pts = seq(y1, y2, length.out = max_diff)
   coords = data.frame(x_pts, y_pts) %>%
+    # Remove non integers. On a grid, this retains only straight and 45° lines
     filter(y_pts%%1==0)
   return(coords)
 }
 
-answer = data.frame()
-for (i in 1:length(data_straight_lines[[1]])) {
-  line = coords(as.numeric(data_straight_lines[i,])) %>%
-    mutate(line = i)
-  answer = bind_rows(answer, line) 
+# For a dataframe of paired pts, calculate all coordinates on all lines
+all_coords = function(df) {
+  answer = data.frame()
+  for (i in 1:nrow(df)) {
+    line = coords(df[i,1], df[i,2], df[i,3], df[i,4])
+    answer = (bind_rows(answer, line))
+  }
+  # Summarise: how often do pairs appear, how many twice or more?
+  answer = answer %>%
+    group_by(x_pts, y_pts) %>%
+    summarise(total = n()) %>%
+    filter(total >= 2) %>%
+    nrow()
+  return(answer)
 }
 
-answer = answer %>%
-  group_by(x_pts, y_pts) %>%
-  summarise(total = n()) %>%
-  filter(total >= 2) %>%
-  nrow()
+answer = all_coords(data_straight_lines)
   
 answer
 
 
 ## PART 2
 
-answer2 = data.frame()
-for (i in 1:length(data[[1]])) {
-  line = coords(as.numeric(data[i,])) %>%
-    mutate(line = i)
-  answer4 = bind_rows(answer2, line) 
-}
-
-answer2 = answer2 %>%
-  group_by(x_pts, y_pts) %>%
-  summarise(total = n()) %>%
-  filter(total >= 2) %>%
-  nrow()
+answer2 = all_coords(data)
 
 answer2
-
